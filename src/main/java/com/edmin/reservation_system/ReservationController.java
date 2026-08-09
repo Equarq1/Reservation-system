@@ -51,11 +51,11 @@ public class ReservationController {
         return ResponseEntity.status(200).body(reservationService.updateReservation(id, reservationToUpdate));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}/cancel")
     public ResponseEntity<Void> deleteReservation(@PathVariable("id") Long id) {
         log.info("called deleteReservation");
         try {
-            reservationService.deleteReservation(id);
+            reservationService.cancelReservation(id);
             return ResponseEntity.status(200).build();
         }
         catch (NoSuchElementException e) {
