@@ -1,4 +1,11 @@
 package com.edmin.reservation_system;
 
-public class ErrorResponseDto {
+import java.time.LocalDateTime;
+
+public record ErrorResponseDto(
+        String message,
+        String detailedMessage,
+        LocalDateTime errorTime
+) {
+
 }
