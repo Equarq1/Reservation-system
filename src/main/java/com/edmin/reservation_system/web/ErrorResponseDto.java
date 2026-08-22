@@ -1,4 +1,4 @@
-package com.edmin.reservation_system;
+package com.edmin.reservation_system.web;
 
 import java.time.LocalDateTime;
 

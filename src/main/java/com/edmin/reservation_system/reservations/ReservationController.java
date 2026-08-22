@@ -1,14 +1,12 @@
-package com.edmin.reservation_system;
+package com.edmin.reservation_system.reservations;
 
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.http.HttpResponse;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/reservation")
@@ -30,19 +28,25 @@ public class ReservationController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<Reservation>> getAllReservations() {
+    public ResponseEntity<List<Reservation>> getAllReservations(
+            @RequestParam(value = "roomId", required = false) Long roomId,
+            @RequestParam(value = "userId", required = false) Long userId,
+            @RequestParam(value = "pageSize", required = false) Integer pageSize,
+            @RequestParam(value = "pageNumber", required = false) Integer pageNumber
+    ) {
         log.info("called getAllReservations");
-        return ResponseEntity.status(200).body(reservationService.findAllReservations());
+        ReservationSearchFilter filter = new ReservationSearchFilter(roomId, userId, pageSize, pageNumber);
+        return ResponseEntity.status(200).body(reservationService.searchAllByFilter(filter));
     }
 
     @PostMapping()
-    public ResponseEntity<Reservation> createReservation(@RequestBody Reservation reservationToCreate) {
+    public ResponseEntity<Reservation> createReservation(@RequestBody @Valid Reservation reservationToCreate) {
         log.info("called createReservation");
         return ResponseEntity.status(201).body(reservationService.createReservation(reservationToCreate));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Reservation> updateReservation(@PathVariable("id") Long id, @RequestBody Reservation reservationToUpdate) {
+    public ResponseEntity<Reservation> updateReservation(@PathVariable("id") Long id, @RequestBody @Valid Reservation reservationToUpdate) {
         log.info("called updateReservation");
         return ResponseEntity.status(200).body(reservationService.updateReservation(id, reservationToUpdate));
     }
