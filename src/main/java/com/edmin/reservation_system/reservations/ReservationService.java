@@ -26,12 +26,12 @@ public class ReservationService {
         this.availabilityService = availabilityService;
     }
 
-    public Reservation getReservationById(Long id) {
+    public ReservationResponse getReservationById(Long id) {
         ReservationEntity reservation = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
         return mapper.toDomain(reservation);
     }
 
-    public List<Reservation> searchAllByFilter(ReservationSearchFilter filter) {
+    public List<ReservationResponse> searchAllByFilter(ReservationSearchFilter filter) {
         int pageSize = filter.pageSize() != null ? filter.pageSize() : 10;
         int pageNumber = filter.pageNumber() != null ? filter.pageNumber() : 0;
         Pageable pageable  = Pageable.ofSize(pageSize).withPage(pageNumber);
@@ -43,10 +43,7 @@ public class ReservationService {
         return allEntities.stream().map(mapper::toDomain).toList();
     }
 
-    public Reservation createReservation(Reservation reservationToCreate) {
-        if (reservationToCreate.status() != null) {
-            throw new IllegalArgumentException("Status should be empty");
-        }
+    public ReservationResponse createReservation(CreateReservationRequest reservationToCreate) {
 
         if (!reservationToCreate.endDate().isAfter(reservationToCreate.startDate())) {
             throw new IllegalArgumentException("start date must be 1 day earlier than end date");
@@ -60,7 +57,7 @@ public class ReservationService {
         return mapper.toDomain(reservation);
     }
 
-    public Reservation updateReservation(Long id, Reservation reservationToUpdate) {
+    public ReservationResponse updateReservation(Long id, UpdateReservationRequest reservationToUpdate) {
         ReservationEntity reservationEntity = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
         if (reservationEntity.getStatus() != ReservationStatus.PENDING) {
             throw new IllegalStateException("Cannot modify reservation");
@@ -70,11 +67,11 @@ public class ReservationService {
             throw new IllegalArgumentException("start date must be 1 day earlier than end date");
         }
 
-        ReservationEntity reservationToSave = mapper.toEntity(reservationToUpdate);
-        reservationToSave.setId(reservationEntity.getId());
-        reservationToSave.setStatus(ReservationStatus.PENDING);
-        var updateReservation = repository.save(reservationToSave);
-        return mapper.toDomain(updateReservation);
+        reservationEntity.setRoomId(reservationToUpdate.roomId());
+        reservationEntity.setStartDate(reservationToUpdate.startDate());
+        reservationEntity.setEndDate(reservationToUpdate.endDate());
+        ReservationEntity updatedReservation = repository.save(reservationEntity);
+        return mapper.toDomain(updatedReservation);
     }
 
     @Transactional
@@ -94,7 +91,7 @@ public class ReservationService {
         log.info("Successfully canceled reservation: id = {}", id);
     }
 
-    public Reservation approveReservation(Long id) {
+    public ReservationResponse approveReservation(Long id) {
         ReservationEntity reservationEntity = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
 
         if (reservationEntity.getStatus() != ReservationStatus.PENDING) {

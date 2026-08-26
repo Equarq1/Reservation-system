@@ -21,14 +21,14 @@ public class ReservationController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Reservation> getReservationById(@PathVariable Long id) {
+    public ResponseEntity<ReservationResponse> getReservationById(@PathVariable Long id) {
         log.info("called getReservation");
         return ResponseEntity.status(200).body(reservationService.getReservationById(id));
 
     }
 
     @GetMapping()
-    public ResponseEntity<List<Reservation>> getAllReservations(
+    public ResponseEntity<List<ReservationResponse>> getAllReservations(
             @RequestParam(value = "roomId", required = false) Long roomId,
             @RequestParam(value = "userId", required = false) Long userId,
             @RequestParam(value = "pageSize", required = false) Integer pageSize,
@@ -40,13 +40,13 @@ public class ReservationController {
     }
 
     @PostMapping()
-    public ResponseEntity<Reservation> createReservation(@RequestBody @Valid Reservation reservationToCreate) {
+    public ResponseEntity<ReservationResponse> createReservation(@RequestBody @Valid CreateReservationRequest reservationToCreate) {
         log.info("called createReservation");
         return ResponseEntity.status(201).body(reservationService.createReservation(reservationToCreate));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Reservation> updateReservation(@PathVariable("id") Long id, @RequestBody @Valid Reservation reservationToUpdate) {
+    public ResponseEntity<ReservationResponse> updateReservation(@PathVariable("id") Long id, @RequestBody @Valid  CreateReservationRequest reservationToUpdate) {
         log.info("called updateReservation");
         return ResponseEntity.status(200).body(reservationService.updateReservation(id, reservationToUpdate));
     }
@@ -59,9 +59,9 @@ public class ReservationController {
     }
 
     @PostMapping("/{id}/approve")
-    public ResponseEntity<Reservation> approveReservation(@PathVariable("id") Long id) {
+    public ResponseEntity<ReservationResponse> approveReservation(@PathVariable("id") Long id) {
         log.info("Called approveReservation: id={}", id);
-        Reservation reservation = reservationService.approveReservation(id);
+        ReservationResponse reservation = reservationService.approveReservation(id);
         return ResponseEntity.ok(reservation);
 
     }
