@@ -1,4 +1,6 @@
 package com.edmin.reservation_system.auth;
 
-public record AuthResponse() {
+public record AuthResponse(
+        String token
+) {
 }
