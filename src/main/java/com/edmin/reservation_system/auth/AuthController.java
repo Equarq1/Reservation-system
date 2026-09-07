@@ -26,7 +26,7 @@ public class AuthController {
 
     @PostMapping("/registration")
     public ResponseEntity<AuthResponse> registration(@Valid @RequestBody RegistrationRequest dto) {
-        authService.register(dto);
-        return ResponseEntity.status(201).body(new AuthResponse("Успешная регистрация"));
+        AuthResponse response = authService.register(dto);
+        return ResponseEntity.status(201).body(response);
     }
 }

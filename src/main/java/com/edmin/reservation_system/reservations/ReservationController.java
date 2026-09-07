@@ -1,6 +1,7 @@
 package com.edmin.reservation_system.reservations;
 
 import jakarta.validation.Valid;
+import org.hibernate.sql.Update;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +47,7 @@ public class ReservationController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReservationResponse> updateReservation(@PathVariable("id") Long id, @RequestBody @Valid  CreateReservationRequest reservationToUpdate) {
+    public ResponseEntity<ReservationResponse> updateReservation(@PathVariable("id") Long id, @RequestBody @Valid UpdateReservationRequest reservationToUpdate) {
         log.info("called updateReservation");
         return ResponseEntity.status(200).body(reservationService.updateReservation(id, reservationToUpdate));
     }
