@@ -6,6 +6,7 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -43,13 +44,13 @@ public class ReservationService {
         return allEntities.stream().map(mapper::toDomain).toList();
     }
 
-    public ReservationResponse createReservation(CreateReservationRequest reservationToCreate) {
+    public ReservationResponse createReservation(Long userId, CreateReservationRequest reservationToCreate) {
 
         if (!reservationToCreate.endDate().isAfter(reservationToCreate.startDate())) {
             throw new IllegalArgumentException("start date must be 1 day earlier than end date");
         }
 
-        ReservationEntity reservationEntity = mapper.toEntity(reservationToCreate);
+        ReservationEntity reservationEntity = mapper.toEntity(userId, reservationToCreate);
         reservationEntity.setStatus(ReservationStatus.PENDING);
 
         ReservationEntity reservation = repository.save(reservationEntity);
@@ -91,6 +92,8 @@ public class ReservationService {
         log.info("Successfully canceled reservation: id = {}", id);
     }
 
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public ReservationResponse approveReservation(Long id) {
         ReservationEntity reservationEntity = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
 

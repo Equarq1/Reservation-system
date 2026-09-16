@@ -7,8 +7,6 @@ import java.time.LocalDate;
 
 public record CreateReservationRequest (
         @NotNull
-        Long userId,
-        @NotNull
         Long roomId,
         @NotNull
         @FutureOrPresent

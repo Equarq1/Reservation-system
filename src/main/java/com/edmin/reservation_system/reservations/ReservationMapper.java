@@ -14,10 +14,10 @@ public class ReservationMapper {
                 reservationEntity.getStatus());
     }
 
-    public ReservationEntity toEntity(CreateReservationRequest reservationRequest) {
+    public ReservationEntity toEntity(Long userId, CreateReservationRequest reservationRequest) {
         return new ReservationEntity(
                 null,
-                reservationRequest.userId(),
+                userId,
                 reservationRequest.roomId(),
                 reservationRequest.startDate(),
                 reservationRequest.endDate(),

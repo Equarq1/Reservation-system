@@ -1,10 +1,11 @@
 package com.edmin.reservation_system.reservations;
 
+import com.edmin.reservation_system.users.CustomUserDetails;
 import jakarta.validation.Valid;
-import org.hibernate.sql.Update;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,9 +42,9 @@ public class ReservationController {
     }
 
     @PostMapping()
-    public ResponseEntity<ReservationResponse> createReservation(@RequestBody @Valid CreateReservationRequest reservationToCreate) {
+    public ResponseEntity<ReservationResponse> createReservation(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody @Valid CreateReservationRequest reservationToCreate) {
         log.info("called createReservation");
-        return ResponseEntity.status(201).body(reservationService.createReservation(reservationToCreate));
+        return ResponseEntity.status(201).body(reservationService.createReservation(userDetails.getId(), reservationToCreate));
     }
 
     @PutMapping("/{id}")
