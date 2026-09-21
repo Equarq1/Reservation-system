@@ -23,10 +23,9 @@ public class ReservationController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReservationResponse> getReservationById(@PathVariable Long id) {
+    public ResponseEntity<ReservationResponse> getReservationById(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user) {
         log.info("called getReservation");
-        return ResponseEntity.status(200).body(reservationService.getReservationById(id));
-
+        return ResponseEntity.status(200).body(reservationService.getReservationById(id, user));
     }
 
     @GetMapping()
@@ -34,11 +33,12 @@ public class ReservationController {
             @RequestParam(value = "roomId", required = false) Long roomId,
             @RequestParam(value = "userId", required = false) Long userId,
             @RequestParam(value = "pageSize", required = false) Integer pageSize,
-            @RequestParam(value = "pageNumber", required = false) Integer pageNumber
+            @RequestParam(value = "pageNumber", required = false) Integer pageNumber,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         log.info("called getAllReservations");
         ReservationSearchFilter filter = new ReservationSearchFilter(roomId, userId, pageSize, pageNumber);
-        return ResponseEntity.status(200).body(reservationService.searchAllByFilter(filter));
+        return ResponseEntity.status(200).body(reservationService.searchAllByFilter(filter, userDetails));
     }
 
     @PostMapping()
@@ -48,15 +48,15 @@ public class ReservationController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReservationResponse> updateReservation(@PathVariable("id") Long id, @RequestBody @Valid UpdateReservationRequest reservationToUpdate) {
+    public ResponseEntity<ReservationResponse> updateReservation(@PathVariable("id") Long id, @RequestBody @Valid UpdateReservationRequest reservationToUpdate, @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("called updateReservation");
-        return ResponseEntity.status(200).body(reservationService.updateReservation(id, reservationToUpdate));
+        return ResponseEntity.status(200).body(reservationService.updateReservation(id, reservationToUpdate, userDetails));
     }
 
     @DeleteMapping("/{id}/cancel")
-    public ResponseEntity<Void> deleteReservation(@PathVariable("id") Long id) {
+    public ResponseEntity<Void> deleteReservation(@PathVariable("id") Long id, @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("called deleteReservation");
-        reservationService.cancelReservation(id);
+        reservationService.cancelReservation(id, userDetails);
         return ResponseEntity.status(200).build();
     }
 

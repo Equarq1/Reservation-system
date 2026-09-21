@@ -1,15 +1,18 @@
 package com.edmin.reservation_system.reservations;
 
 import com.edmin.reservation_system.reservations.availability.ReservationAvailabilityService;
+import com.edmin.reservation_system.users.CustomUserDetails;
+import com.edmin.reservation_system.users.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+
 import java.util.*;
 
 @Service
@@ -27,18 +30,21 @@ public class ReservationService {
         this.availabilityService = availabilityService;
     }
 
-    public ReservationResponse getReservationById(Long id) {
+    public ReservationResponse getReservationById(Long id, CustomUserDetails userDetails) {
         ReservationEntity reservation = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
+        checkOwnershipOrAdmin(reservation, userDetails);
         return mapper.toDomain(reservation);
     }
 
-    public List<ReservationResponse> searchAllByFilter(ReservationSearchFilter filter) {
+    public List<ReservationResponse> searchAllByFilter(ReservationSearchFilter filter, CustomUserDetails userDetails) {
+        boolean isAdmin = userDetails.getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        Long targetUserId = isAdmin ? filter.userId() : userDetails.getId();
         int pageSize = filter.pageSize() != null ? filter.pageSize() : 10;
         int pageNumber = filter.pageNumber() != null ? filter.pageNumber() : 0;
         Pageable pageable  = Pageable.ofSize(pageSize).withPage(pageNumber);
         List<ReservationEntity> allEntities = repository.searchAllByFilter(
                 filter.roomId(),
-                filter.userId(),
+                targetUserId,
                 pageable
         );
         return allEntities.stream().map(mapper::toDomain).toList();
@@ -58,8 +64,9 @@ public class ReservationService {
         return mapper.toDomain(reservation);
     }
 
-    public ReservationResponse updateReservation(Long id, UpdateReservationRequest reservationToUpdate) {
+    public ReservationResponse updateReservation(Long id, UpdateReservationRequest reservationToUpdate, CustomUserDetails userDetails) {
         ReservationEntity reservationEntity = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Not found reservation by id = " + id));
+        checkOwnershipOrAdmin(reservationEntity, userDetails);
         if (reservationEntity.getStatus() != ReservationStatus.PENDING) {
             throw new IllegalStateException("Cannot modify reservation");
         }
@@ -76,11 +83,9 @@ public class ReservationService {
     }
 
     @Transactional
-    public void cancelReservation(Long id) {
-        if (!repository.existsById(id)) {
-            throw new NoSuchElementException("No reservation by id = " + id);
-        }
+    public void cancelReservation(Long id, CustomUserDetails userDetails) {
         ReservationEntity reservation = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Not found reservation by id"));
+        checkOwnershipOrAdmin(reservation, userDetails);
         if (reservation.getStatus().equals(ReservationStatus.APPROVED)) {
             throw new IllegalStateException("cannot cancel approved reservation");
         }
@@ -88,7 +93,7 @@ public class ReservationService {
         if (reservation.getStatus().equals(ReservationStatus.CANCELED)) {
             throw new IllegalStateException("reservation was already canceled");
         }
-        repository.setStatus(id, ReservationStatus.CANCELED);
+        reservation.setStatus(ReservationStatus.CANCELED);
         log.info("Successfully canceled reservation: id = {}", id);
     }
 
@@ -108,6 +113,16 @@ public class ReservationService {
         reservationEntity.setStatus(ReservationStatus.APPROVED);
         ReservationEntity reservation = repository.save(reservationEntity);
         return mapper.toDomain(reservation);
+    }
+
+    private void checkOwnershipOrAdmin(ReservationEntity reservation, CustomUserDetails user) {
+        boolean isAdmin = user.getAuthorities().stream().anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin && !reservation.getUserId().equals(user.getId())) {
+            throw new AccessDeniedException("You are not the owner of this reservation");
+        }
+
+
     }
 }
 

@@ -8,6 +8,7 @@
     import org.springframework.web.bind.annotation.ControllerAdvice;
     import org.springframework.web.bind.annotation.ExceptionHandler;
 
+    import java.nio.file.AccessDeniedException;
     import java.time.LocalDateTime;
 
     @ControllerAdvice
@@ -34,6 +35,12 @@
             ErrorResponseDto errorResponseDto = new ErrorResponseDto("Bad Request", e.getMessage(), LocalDateTime.now());
             log.error("Bad Request", e);
             return ResponseEntity.status(400).body(errorResponseDto);
+        }
+
+        @ExceptionHandler(exception = {AccessDeniedException.class})
+        public ResponseEntity<ErrorResponseDto> handleAccessDenied(AccessDeniedException e) {
+            ErrorResponseDto errorResponseDto = new ErrorResponseDto("Forbidden", e.getMessage(), LocalDateTime.now());
+            return ResponseEntity.status(403).body(errorResponseDto);
         }
 
 
