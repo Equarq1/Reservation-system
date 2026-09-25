@@ -4,6 +4,7 @@ import com.edmin.reservation_system.users.CustomUserDetails;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +30,7 @@ public class ReservationController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<ReservationResponse>> getAllReservations(
+    public ResponseEntity<Page<ReservationResponse>> getAllReservations(
             @RequestParam(value = "roomId", required = false) Long roomId,
             @RequestParam(value = "userId", required = false) Long userId,
             @RequestParam(value = "pageSize", required = false) Integer pageSize,
@@ -53,11 +54,14 @@ public class ReservationController {
         return ResponseEntity.status(200).body(reservationService.updateReservation(id, reservationToUpdate, userDetails));
     }
 
-    @DeleteMapping("/{id}/cancel")
-    public ResponseEntity<Void> deleteReservation(@PathVariable("id") Long id, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        log.info("called deleteReservation");
-        reservationService.cancelReservation(id, userDetails);
-        return ResponseEntity.status(200).build();
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<ReservationResponse> cancelReservation(
+            @PathVariable("id") Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        log.info("called cancelReservation");
+        ReservationResponse response = reservationService.cancelReservation(id, userDetails);
+        return ResponseEntity.status(200).body(response);
     }
 
     @PostMapping("/{id}/approve")

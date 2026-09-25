@@ -1,5 +1,6 @@
 package com.edmin.reservation_system.reservations;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -21,7 +22,7 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
     void setStatus(@Param("id") Long id,
                    @Param("status") ReservationStatus reservationStatus);
 
-    @Query("SELECT r.id from ReservationEntity r WHERE r.roomId = :roomId" +
+    @Query("SELECT r.id from ReservationEntity r WHERE r.room.id = :roomId" +
             " AND :startDate < r.endDate" +
             " AND r.startDate < :endDate" +
             " AND r.status = :status")
@@ -30,9 +31,9 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
                                            @Param("endDate") LocalDate endDate,
                                            @Param("status") ReservationStatus status);
 
-    @Query("select r from ReservationEntity r where (:roomId IS NULL OR r.roomId = :roomId)" +
-            " and (:userId IS NULL OR r.userId = :userId)")
-    List<ReservationEntity> searchAllByFilter(
+    @Query("select r from ReservationEntity r where (:roomId IS NULL OR r.room.id = :roomId)" +
+            " and (:userId IS NULL OR r.user.id = :userId)")
+    Page<ReservationEntity> searchAllByFilter(
             @Param("roomId") Long roomId,
             @Param("userId") Long userId,
             Pageable pageable

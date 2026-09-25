@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -69,17 +70,23 @@ public class ReservationService {
         }
 
         UserEntity user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found with id = " + userId));
-        RoomEntity room = roomRepository.findById(reservationToCreate.roomId()).orElseThrow(() -> new EntityNotFoundException("Room not found with id = " + reservationToCreate.roomId()));
-        ReservationEntity reservationEntity = mapper.toEntity(user, room, reservationToCreate);
-        reservationEntity.setStatus(ReservationStatus.PENDING);
-        ReservationEntity response = repository.save(reservationEntity);
+        RoomEntity room = roomRepository.findByIdWithLock(reservationToCreate.roomId()).orElseThrow(() -> new EntityNotFoundException("Room not found with id = " + reservationToCreate.roomId()));
+
         if (room.getStatus() != RoomStatus.AVAILABLE) {
             throw new IllegalStateException("Room status must be AVAILABLE");
         }
 
+        boolean isAvailable = availabilityService.isReservationAvailable(
+                room.getId(), reservationToCreate.startDate(), reservationToCreate.endDate());
+        if (!isAvailable) {
+            throw new IllegalStateException("Room is not available for selected dates");
+        }
 
+        ReservationEntity reservationEntity = mapper.toEntity(user, room, reservationToCreate);
+        ReservationEntity response = repository.save(reservationEntity);
         return mapper.toDomain(response);
     }
+
 
     @Transactional
     public ReservationResponse updateReservation(Long id, UpdateReservationRequest reservationToUpdate, CustomUserDetails userDetails) {
@@ -93,10 +100,17 @@ public class ReservationService {
             throw new IllegalArgumentException("start date must be 1 day earlier than end date");
         }
 
-        RoomEntity room = roomRepository.findById(reservationToUpdate.roomId()).orElseThrow(() -> new EntityNotFoundException("Not found room with id = " + reservationToUpdate.roomId()));
+
+        RoomEntity room = roomRepository.findByIdWithLock(reservationToUpdate.roomId()).orElseThrow(() -> new EntityNotFoundException("Not found room with id = " + reservationToUpdate.roomId()));
 
         if (room.getStatus() != RoomStatus.AVAILABLE) {
             throw new IllegalStateException("Room status must be AVAILABLE");
+        }
+
+        boolean isAvailable = availabilityService.isReservationAvailableForUpdate(
+                room.getId(), reservationToUpdate.startDate(), reservationToUpdate.endDate(), id);
+        if (!isAvailable) {
+            throw new IllegalStateException("Room is already reserved for selected dates");
         }
 
         reservationEntity.setRoom(room);
@@ -148,5 +162,6 @@ public class ReservationService {
             throw new AccessDeniedException("You are not the owner of this reservation");
         }
     }
+
 }
 

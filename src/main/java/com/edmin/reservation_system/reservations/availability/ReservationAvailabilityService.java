@@ -34,4 +34,17 @@ public class ReservationAvailabilityService {
         log.info("Conflict with ids = {}", conflictingIds);
         return false;
     }
+
+    public boolean isReservationAvailableForUpdate(Long roomId, LocalDate startDate, LocalDate endDate, Long excludeReservationId) {
+        if (!endDate.isAfter(startDate)) {
+            throw new IllegalArgumentException("start date must be at least 1 day earlier than end date");
+        }
+
+        List<Long> conflictingIds = repository.findConflictReservationIds(
+                roomId, startDate, endDate, ReservationStatus.APPROVED);
+
+        conflictingIds.remove(excludeReservationId);
+
+        return conflictingIds.isEmpty();
+    }
 }

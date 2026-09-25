@@ -2,7 +2,6 @@ package com.edmin.reservation_system.rooms;
 
 import com.edmin.reservation_system.users.CustomUserDetails;
 import jakarta.validation.Valid;
-import org.aspectj.lang.annotation.RequiredTypes;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
